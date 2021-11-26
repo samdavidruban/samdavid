@@ -1,0 +1,101 @@
+<?php
+     require_once "db.php";
+     $columns = array('date', 'mname', 'amount');
+     $column = isset($_GET['column']) && in_array($_GET['column'], $columns) ? $_GET['column'] :   $columns[0];
+     $sort_order = isset($_GET['order']) && strtolower($_GET['order']) == 'desc' ? 'DESC' : 'ASC';
+
+     $perpage = 5;
+     if(isset($_GET['page']) & !empty($_GET['page'])){
+     $curpage = $_GET['page'];
+     }else{
+     $curpage = 1;
+     }
+     $start = ($curpage * $perpage) - $perpage;
+     $PageSql = "SELECT * from `save`";
+     $pageres = mysqli_query($link, $PageSql);
+     $totalres = mysqli_num_rows($pageres);
+
+     $endpage = ceil($totalres/$perpage);
+     $startpage = 1;
+     $nextpage = $curpage + 1;
+     $previouspage = $curpage - 1;
+     $ReadSql = "select date, mname, saving from save ORDER BY $column $sort_order LIMIT $start,    $perpage";
+     $result = mysqli_query($link, $ReadSql);
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <style> </style>
+    <title>Table Sort with Pagination - MySQL and PHP</title>
+    </head>
+    <body>
+
+    <div class="pageno">
+    <nav aria-label="Page navigation">
+    <ul class="pagination">
+    <?php if($curpage != $startpage){ ?>
+    <li class="page-item">
+    <a class="page-link" href="?page=<?php echo $startpage ?>" tabindex="-1" aria-label="Previous">
+    <span aria-hidden="true">&laquo;</span>
+    <span class="sr-only">First</span>
+    </a>
+    </li>
+    <?php } ?>
+    <?php if($curpage >= 2){ ?>
+    <li class="page-item"><a class="page-link" href="?page=<?php echo $previouspage ?>"><?php echo $previouspage ?></a></li>
+    <?php } ?>
+    <li class="page-item active"><a class="page-link" href="?page=<?php echo $curpage ?>"><?php echo $curpage ?></a></li>
+    <?php if($curpage != $endpage){ ?>
+    <li class="page-item"><a class="page-link" href="?page=<?php echo $nextpage ?>"><?php echo $nextpage ?></a></li>
+    <li class="page-item">
+    <a class="page-link" href="?page=<?php echo $endpage ?>" aria-label="Next">
+    <span aria-hidden="true">&raquo;</span>
+    <span class="sr-only">Last</span>
+    </a>
+    </li>
+    <?php } ?>
+    </ul>
+    </nav>
+    </div>
+
+    </body>
+    </html>
+    <?php
+
+    if($result = mysqli_query($link, $ReadSql)){
+    $up_or_down = str_replace(array('ASC','DESC'), array('up','down'), $sort_order); 
+    $asc_or_desc = $sort_order == 'ASC' ? 'desc' : 'asc';
+    $add_class = ' class="highlight"';
+    if(mysqli_num_rows($result) > 0){
+    $row_count=0;
+    echo '<div class="containerparticulars">';
+    echo "<table class='table table-bordered table-striped'>";
+    echo "<thead>";
+    echo "<tr>";
+    ?><th><a href="help1.php?column=date&order=<?php echo $asc_or_desc; ?>">Date<i class="fas fa-sort<?php echo $column == 'date' ? '-' . $up_or_down : ''; ?>"></i></a></th>
+    <th><a href="help1.php?column=mname&order=<?php echo $asc_or_desc; ?>">Member Name<i class="fas fa-sort<?php echo $column == 'mname' ? '-' . $up_or_down : ''; ?>"></i></a></th>
+    <th><a href="help1.php?column=saving&order=<?php echo $asc_or_desc; ?>">Saving<i class="fas fa-sort<?php echo $column == 'saving' ? '-' . $up_or_down : ''; ?>"></i></a></th>
+
+    <?php
+    echo "</tr>";
+    echo "</thead>";
+    echo "<tbody>";
+    while($row = mysqli_fetch_array($result)){
+    echo "<tr>";
+    ?>
+
+    <td<?php echo $column == 'date' ? $add_class : ''; ?>><?php echo $row['date']; ?></td>
+    <td<?php echo $column == 'mname' ? $add_class : ''; ?>><?php echo $row['mname']; ?></td>
+    <td<?php echo $column == 'saving' ? $add_class : ''; ?>><?php echo number_format($row['saving'],2); ?></td>
+
+    <?php
+    echo "</tr>";
+    }
+    echo "</tbody>";                            
+    echo "</table>";
+    echo '</div>';
+    mysqli_free_result($result);
+    } 
+     else{
+    echo "<No records were found.";
+    }
